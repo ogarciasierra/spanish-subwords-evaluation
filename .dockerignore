@@ -1,0 +1,9 @@
+models/
+docs/
+.venv/
+.pytest_cache/
+.git/
+.vscode/
+local/
+mongo_data/
+helm/

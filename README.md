@@ -1,1 +1,1 @@
-# spanish-subwords-evaluation
+# spanish-morph-tokenizer
