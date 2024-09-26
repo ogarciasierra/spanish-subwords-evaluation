@@ -126,7 +126,7 @@ class MorphologicalEvaluator:
                 task_2_results[f"{morpheme_type}"][f"{path}_multitoken incorrect"] =   f"{(len(multitoken_incorrect)/len(words)) * 100:.2f}%"
                 
                 
-        dump_json(task_2_results, 'data/results/task_2_results.json')
+        dump_json(task_2_results, 'results/task_2_results.json')
 
 
     def eval_tokenizer(self, path):
@@ -154,7 +154,7 @@ class MorphologicalEvaluator:
         
         for word in self.task3:
             
-            total = total+1
+            total += 1
             gold_segmentations = word[1]
             word = word[0]
             all_segmentations = []
@@ -166,21 +166,18 @@ class MorphologicalEvaluator:
 
             all_predictions = tokenizer.tokenize(word)
 
-            l = l+ len(all_predictions)
+            l += len(all_predictions)
 
-            
-            all_predictions = [re.sub('##','', pred) for pred in all_predictions]
+            all_predictions = [re.sub('##', '', pred) for pred in all_predictions]
             all_predictions = [self.post_process(word) for word in all_predictions]
-            all_predictions = [[re.sub('▁','', pred) for pred in all_predictions]]
+            all_predictions = [[re.sub('▁', '', pred) for pred in all_predictions]]
 
-            
-            
             intersection = [list(sublista) for sublista in map(tuple, all_predictions) if tuple(sublista) in map(tuple, all_segmentations)]
 
             if len(intersection) > 0:
                 correct.append((word, all_predictions))
                 if len(all_predictions[0]) == 1:
-                    m+=1
+                    m += 1
             else:
                 wrong.append((word, all_predictions))
 
@@ -205,38 +202,36 @@ class MorphologicalEvaluator:
                                 type3 = True
                                 break
                             
-                            
                     if type3 == True:
                         t3.append((word, all_predictions))
                     else:
                         t4.append((word, all_predictions))
-        import random
-        random.shuffle(t1)
-        random.shuffle(t2)
-        random.shuffle(t3)
-        random.shuffle(t4)
-        print("Infra", len(t1),t1[:5])
-        print()
-        print("sobtr", len(t2), t2[:5])
-        print()
-        print("no in vocab", len(t3), t3[:5])
-        print()
-        print("other", len(t4), t4[:5])
-        print("total", len(wrong))
-        print()
 
-        return len(correct)/total, wrong
+        # Diccionario para almacenar los errores por tipo
+        errors = {
+            1: len(t1),  # Infrasegmentación
+            2: len(t2),  # Sobresubsegmentación
+            3: len(t3),  # Token no en vocabulario
+            4: len(t4),  # Otro tipo de error
+        }
+
+        return len(correct)/total, errors  # Retornar puntaje de precisión y los errores
 
 
     def eval_task3(self):
 
         results = {}
+        all_errors = {}
+
         for path in self.tokenizers_paths:
             print(f"Evaluating {path}")
-            score, wrongs = self.eval_tokenizer(path)
+            score, errors = self.eval_tokenizer(path)  # Obtener ambos resultados
             results[path] = score
+            all_errors[path] = errors  # Guardar los errores por tokenizador
         
-        print(results)
+        print("Results:", results)
+
+        return results, all_errors  # Retornar ambos resultados
 
 
     def full_eval(self):
