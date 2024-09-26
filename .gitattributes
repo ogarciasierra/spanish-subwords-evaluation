@@ -1,5 +1,0 @@
-src/data/tokenizers/prevocab.json filter=lfs diff=lfs merge=lfs -text
-src/data/train/tokenizer_training_data.json filter=lfs diff=lfs merge=lfs -text
-src/evaluation/tokenizer_evaluation/morph_coherence.json filter=lfs diff=lfs merge=lfs -text
-*.zip filter=lfs diff=lfs merge=lfs -text
-*.json filter=lfs diff=lfs merge=lfs -text
