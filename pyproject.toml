@@ -5,7 +5,7 @@ requires = ["poetry_core>=1.6.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
-name = "spanish-morph-embeddings"
+name = "spanish-subwords-evaluation"
 version = "0.1.0"
 description = "template"
 readme = "README.md"

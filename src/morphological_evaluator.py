@@ -11,11 +11,11 @@ class MorphologicalEvaluator:
 
     def __init__(self, tokenizers_paths:list):
 
-        self.task1 = load_json('data\evaluation\morph_quality.json')
-        self.task2 = load_json('data\evaluation\morph_coherence.json')
-        self.task3 = load_json('data\evaluation\morph_segmentation.json')
+        self.task1 = load_json('..\morph_quality.json')
+        self.task2 = load_json('..\morph_coherence.json')
+        self.task3 = load_json('..\morph_segmentation.json')
 
-        self.afixes = pd.read_csv('data/vocabs/afixes.csv', usecols=['FORMA', 'TIPO', 'DERIVADOS'])
+        self.afixes = pd.read_csv('data/afixes.csv', usecols=['FORMA', 'TIPO', 'DERIVADOS'])
         self.prefixes = self.afixes[self.afixes['TIPO'].str.startswith('pref')]['FORMA'].values.tolist()
         self.suffixes = self.afixes[self.afixes['TIPO'].str.startswith('suf')]['FORMA'].values.tolist()
 
@@ -37,7 +37,7 @@ class MorphologicalEvaluator:
             vocab = tokenizer.get_vocab()
             vocab = list(vocab.keys())
 
-            vocab = [self.post_process(word) for word in vocab]
+            vocab = [post_process(word) for word in vocab]
             
             if 'bpe' in path or 'bne' in path:
                     vocab = ["##"+element if not element.startswith("Ġ") and not element.startswith("#") else element[1:] for i, element in enumerate(vocab)]
@@ -74,7 +74,7 @@ class MorphologicalEvaluator:
         task_2_results['suffixes'] = {}
         task_2_results['clitics'] = {}
         
-        for path in tqdm.tqdm(self.transformer_models):
+        for path in tqdm.tqdm(self.tokenizers_paths):
             print(f"Evaluating {path}")
             tokenizer = AutoTokenizer.from_pretrained(path)
 
@@ -108,9 +108,9 @@ class MorphologicalEvaluator:
                         tokens = ["##"+element if i>0 else element[1:] for i, element in enumerate(tokens)]
                     elif 'bpe' in path or 'bne' in path:
                         tokens = ["##"+element if i>0 else element for i, element in enumerate(tokens)]
-                        tokens = self.corregir_segmentacion(tokens)
+                        tokens = corregir_segmentacion(tokens)
 
-                    tokens = [self.post_process(word) for word in tokens]
+                    tokens = [post_process(word) for word in tokens]
 
                     if len(tokens) == 1:
                         monotoken.append([word, tokens])
@@ -231,7 +231,7 @@ class MorphologicalEvaluator:
     def eval_task3(self):
 
         results = {}
-        for path in self.transformer_models:
+        for path in self.tokenizers_paths:
             print(f"Evaluating {path}")
             score, wrongs = self.eval_tokenizer(path)
             results[path] = score
