@@ -2,11 +2,27 @@ import json
 import codecs
 from os.path import dirname, realpath
 import sys
+import os
 
 def load_json(path):
     with open(path, 'r', encoding="utf-8") as file:
         data = json.load(file)
     return data
+
+def load_all_json_parts(directory):
+    combined_data = {}
+
+    for filename in os.listdir(directory):
+        if filename.endswith(".json"):
+            filepath = os.path.join(directory, filename)
+            data = load_json(filepath)
+            
+            for key, value in data.items():
+                if key not in combined_data:
+                    combined_data[key] = []
+                combined_data[key].extend(value)
+    
+    return combined_data
 
 def dump_json(data, path):
     with open(path, 'w', encoding="utf-8") as file:

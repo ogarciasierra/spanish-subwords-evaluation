@@ -5,15 +5,16 @@ import pandas as pd
 import tqdm
 from transformers import AutoTokenizer
 
-from src.utils import load_json, dump_json, calculate_metrics, post_process, eliminar_repetidos, corregir_segmentacion 
+from src.utils import load_json, dump_json, calculate_metrics, post_process, eliminar_repetidos, corregir_segmentacion, load_all_json_parts
 
 class MorphologicalEvaluator:
 
     def __init__(self, tokenizers_paths:list):
 
-        self.task1 = load_json('..\morph_quality.json')
-        self.task2 = load_json('..\morph_coherence.json')
-        self.task3 = load_json('..\morph_segmentation.json')
+        self.task1 = load_json('data/morph_quality.json')
+        task2_directory = "data/task2"  
+        self.task2 = load_all_json_parts(task2_directory)
+        self.task3 = load_json('data/morph_segmentation.json')
 
         self.afixes = pd.read_csv('data/afixes.csv', usecols=['FORMA', 'TIPO', 'DERIVADOS'])
         self.prefixes = self.afixes[self.afixes['TIPO'].str.startswith('pref')]['FORMA'].values.tolist()
@@ -150,7 +151,7 @@ class MorphologicalEvaluator:
         vocab = tokenizer.get_vocab()
         vocab = list(vocab.keys())
 
-        vocab = [self.post_process(word) for word in vocab]
+        vocab = [post_process(word) for word in vocab]
         
         for word in self.task3:
             
@@ -169,7 +170,7 @@ class MorphologicalEvaluator:
             l += len(all_predictions)
 
             all_predictions = [re.sub('##', '', pred) for pred in all_predictions]
-            all_predictions = [self.post_process(word) for word in all_predictions]
+            all_predictions = [post_process(word) for word in all_predictions]
             all_predictions = [[re.sub('▁', '', pred) for pred in all_predictions]]
 
             intersection = [list(sublista) for sublista in map(tuple, all_predictions) if tuple(sublista) in map(tuple, all_segmentations)]
@@ -198,7 +199,6 @@ class MorphologicalEvaluator:
                                 token = "▁"+token
 
                             if token not in vocab:
-                                print(word, token, all_predictions)
                                 type3 = True
                                 break
                             
@@ -207,16 +207,15 @@ class MorphologicalEvaluator:
                     else:
                         t4.append((word, all_predictions))
 
-        # Diccionario para almacenar los errores por tipo
+        
         errors = {
-            1: len(t1),  # Infrasegmentación
-            2: len(t2),  # Sobresubsegmentación
-            3: len(t3),  # Token no en vocabulario
-            4: len(t4),  # Otro tipo de error
+            1: len(t1),  
+            2: len(t2),  
+            3: len(t3),  
+            4: len(t4), 
         }
 
-        return len(correct)/total, errors  # Retornar puntaje de precisión y los errores
-
+        return len(correct)/total, errors  
 
     def eval_task3(self):
 
@@ -225,13 +224,15 @@ class MorphologicalEvaluator:
 
         for path in self.tokenizers_paths:
             print(f"Evaluating {path}")
-            score, errors = self.eval_tokenizer(path)  # Obtener ambos resultados
+            score, errors = self.eval_tokenizer(path)  
             results[path] = score
-            all_errors[path] = errors  # Guardar los errores por tokenizador
+            all_errors[path] = errors  
         
-        print("Results:", results)
+        dump_json(results, 'results/task_3_results.json')
+        dump_json(errors, 'results/task_3_errors.json')
 
-        return results, all_errors  # Retornar ambos resultados
+
+        return results, all_errors 
 
 
     def full_eval(self):
